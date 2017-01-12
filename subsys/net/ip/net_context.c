@@ -768,7 +768,8 @@ static enum net_verdict tcp_established(struct net_conn *conn,
 			sys_get_be32(NET_TCP_BUF(buf)->seq) + 1;
 
 		if (context->recv_cb) {
-			context->recv_cb(context, NULL, 0, user_data);
+			context->recv_cb(context, NULL, 0,
+					 context->tcp->recv_user_data);
 		}
 
 	} else {
@@ -785,7 +786,7 @@ static enum net_verdict tcp_established(struct net_conn *conn,
 		set_appdata_values(buf, IPPROTO_TCP, net_buf_frags_len(buf));
 		context->tcp->send_ack += net_nbuf_appdatalen(buf);
 
-		ret = packet_received(conn, buf, user_data);
+		ret = packet_received(conn, buf, context->tcp->recv_user_data);
 	}
 
 	send_ack(context, &conn->remote_addr);
@@ -1997,6 +1998,7 @@ int net_context_recv(struct net_context *context,
 		}
 
 		context->recv_cb = cb;
+		context->tcp->recv_user_data = user_data;
 	} else
 #endif /* CONFIG_NET_TCP */
 	{
